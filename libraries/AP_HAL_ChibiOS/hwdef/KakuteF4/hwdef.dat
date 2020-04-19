@@ -1,8 +1,6 @@
 # hw definition file for KakuteF4 hardware
 
-# STATUS:
-# This port is mostly complete. Main missing feature are OSD,
-# dataflash
+
 
 # MCU class and specific type
 MCU STM32F4xx STM32F405xx
@@ -88,7 +86,7 @@ PA9 USART1_TX USART1
 PA10 USART1_RX USART1
 
 # default Serial2 to FrSky telemetry
-define HAL_SERIAL2_PROTOCOL_DEFAULT 10
+define HAL_SERIAL2_PROTOCOL 10
 
 # USART6, telem1, SERIAL1
 PC6 USART6_TX USART6
@@ -118,7 +116,8 @@ PB1 TIM3_CH4 TIM3 PWM(2) GPIO(51)
 PA3 TIM5_CH4 TIM5 PWM(3) GPIO(52)
 PA2 TIM5_CH3 TIM5 PWM(4) GPIO(53)
 
-# PC8 TIM8_CH3 TIM2 GPIO(54) # LED strip
+PC8 TIM8_CH3 TIM8 PWM(5) GPIO(54) # LED strip
+define HAL_NEOPIXEL_COUNT 8
 
 define HAL_STORAGE_SIZE 15360
 define STORAGE_FLASH_PAGE 2
@@ -149,9 +148,12 @@ BARO BMP280 I2C:0:0x76
 define HAL_LOGGING_DATAFLASH
 
 # setup for OSD
-define OSD_ENABLED ENABLED
+define OSD_ENABLED 1
 define HAL_OSD_TYPE_DEFAULT 1
 ROMFS_WILDCARD libraries/AP_OSD/fonts/font*.bin
+
+#eliminate EKF2 to save flash size
+define HAL_NAVEKF2_AVAILABLE 0
 
 # 8 PWM available by default
 define BOARD_PWM_COUNT_DEFAULT 8

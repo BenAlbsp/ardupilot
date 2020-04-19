@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <GCS_MAVLink/GCS.h>
+#include <AP_Logger/AP_Logger.h>
 
 extern const AP_HAL::HAL& hal;
 
@@ -40,10 +41,10 @@ gimbal_mode_t SoloGimbal::get_mode()
     }
 }
 
-void SoloGimbal::receive_feedback(mavlink_channel_t chan, const mavlink_message_t *msg)
+void SoloGimbal::receive_feedback(mavlink_channel_t chan, const mavlink_message_t &msg)
 {
     mavlink_gimbal_report_t report_msg;
-    mavlink_msg_gimbal_report_decode(msg, &report_msg);
+    mavlink_msg_gimbal_report_decode(&msg, &report_msg);
     uint32_t tnow_ms = AP_HAL::millis();
     _last_report_msg_ms = tnow_ms;
 
@@ -229,7 +230,7 @@ void SoloGimbal::readVehicleDeltaAngle(uint8_t ins_index, Vector3f &dAng) {
 void SoloGimbal::update_fast() {
     const AP_InertialSensor &ins = AP::ins();
 
-    if (ins.get_gyro_health(0) && ins.get_gyro_health(1)) {
+    if (ins.use_gyro(0) && ins.use_gyro(1)) {
         // dual gyro mode - average first two gyros
         Vector3f dAng;
         readVehicleDeltaAngle(0, dAng);
@@ -388,16 +389,16 @@ void SoloGimbal::write_logs()
         return;
     }
 
-    uint32_t tstamp = AP_HAL::millis();
+    const uint64_t tstamp = AP_HAL::micros64();
     Vector3f eulerEst;
 
     Quaternion quatEst;
     _ekf.getQuat(quatEst);
     quatEst.to_euler(eulerEst.x, eulerEst.y, eulerEst.z);
 
-    struct log_Gimbal1 pkt1 = {
+    struct log_Gimbal1 pkt1{
         LOG_PACKET_HEADER_INIT(LOG_GIMBAL1_MSG),
-        time_ms : tstamp,
+        time_us : tstamp,
         delta_time      : _log_dt,
         delta_angles_x  : _log_del_ang.x,
         delta_angles_y  : _log_del_ang.y,
@@ -411,9 +412,9 @@ void SoloGimbal::write_logs()
     };
     logger->WriteBlock(&pkt1, sizeof(pkt1));
 
-    struct log_Gimbal2 pkt2 = {
+    struct log_Gimbal2 pkt2{
         LOG_PACKET_HEADER_INIT(LOG_GIMBAL2_MSG),
-        time_ms : tstamp,
+        time_us : tstamp,
         est_sta : (uint8_t) _ekf.getStatus(),
         est_x   : eulerEst.x,
         est_y   : eulerEst.y,
